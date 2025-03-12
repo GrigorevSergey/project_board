@@ -5,7 +5,7 @@ from .models import AdditionalTask, Board, Project, Task
 
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin):
-    list_display = ("title",)
+    list_display = ("title", "owner")
 
 
 @admin.register(Board)

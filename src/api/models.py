@@ -2,12 +2,34 @@ from django.conf import settings
 from django.db import models
 
 
-class Project(models.Model):
+class BaseModel(models.Model):
     title = models.CharField(max_length=100, verbose_name="Название")
-    description = models.TextField(verbose_name="Описание")
+    description = models.TextField(blank=True, null=True, verbose_name="Описание")
+
+    class Meta:
+        abstract = True
 
 
-class Board(models.Model):
+class Project(BaseModel):
+    owner = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        blank=True,
+        null=True,
+        verbose_name="Создатель проекта",
+        related_name="owned_project",
+    )
+    members = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        verbose_name="Участники",
+        blank=True,
+        null=True,
+        related_name="projects",
+    )
+
+
+class Board(BaseModel):
     STATUS_CHOICES = [
         ("backlog", "Бэклог"),
         ("in_progress", "В работе"),
@@ -18,21 +40,19 @@ class Board(models.Model):
     project = models.OneToOneField(
         Project, on_delete=models.CASCADE, verbose_name="Проект"
     )
-    title = models.CharField(max_length=100, verbose_name="Название")
     status = models.CharField(
         max_length=20, choices=STATUS_CHOICES, default="backlog", verbose_name="Статус"
     )
 
 
-class Task(models.Model):
+class Task(BaseModel):
     PRIORITY_CHOICES = [
         ("high", "Высокий"),
         ("medium", "Средний"),
         ("low", "Низкий"),
     ]
+
     board = models.ForeignKey(Board, on_delete=models.CASCADE, verbose_name="Доска")
-    title = models.CharField(max_length=100, verbose_name="Название")
-    description = models.TextField(verbose_name="Описание задачи")
     users = models.ManyToManyField(settings.AUTH_USER_MODEL, verbose_name="Исполнители")
     date = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
     updated = models.DateTimeField(auto_now=True, verbose_name="Дата обновления")
@@ -50,12 +70,41 @@ class Task(models.Model):
         return self.title
 
 
-class AdditionalTask(models.Model):
+class AdditionalTask(BaseModel):
     task = models.ForeignKey(
         Task, on_delete=models.CASCADE, verbose_name="Дополнительная задача"
     )
-    title = models.CharField(max_length=100, verbose_name="Название доп.задачи")
-    description = models.TextField(verbose_name="Описание доп.задачи")
 
     def __str__(self):
         return self.title
+
+
+class ProjectMemberShip(models.Model):
+    ROLES_CHOICES = [
+        ("owner", "Создатель"),
+        ("admin", "Администратор"),
+        ("member", "Участник"),
+        ("viewer", "Зритель"),
+    ]
+    users = models.ManyToManyField(settings.AUTH_USER_MODEL, verbose_name="Исполнители")
+    project = models.OneToOneField(
+        Project, on_delete=models.CASCADE, verbose_name="Проект"
+    )
+    role = models.CharField(
+        max_length=20, choices=ROLES_CHOICES, default="member", verbose_name="Роли"
+    )
+
+
+class TaskRelation(models.Model):
+    RELATION_TYPES = [
+        ("block", "Block"),
+        ("relates_to", "Relates To"),
+        ("duplicates", "Duplicates"),
+    ]
+    from_task = models.ForeignKey(
+        Task, on_delete=models.CASCADE, blank=True, related_name="from_relations"
+    )
+    to_task = models.ForeignKey(
+        Task, on_delete=models.CASCADE, blank=True, related_name="to_relations"
+    )
+    relation_type = models.CharField(max_length=20, choices=RELATION_TYPES, blank=True)
