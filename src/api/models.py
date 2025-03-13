@@ -10,6 +10,14 @@ class BaseModel(models.Model):
         abstract = True
 
 
+class BaseDataTime(models.Model):
+    date = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
+    updated = models.DateTimeField(auto_now=True, verbose_name="Дата обновления")
+
+    class Meta:
+        abstract = True
+
+
 class Project(BaseModel):
     owner = models.OneToOneField(
         settings.AUTH_USER_MODEL,
@@ -45,7 +53,7 @@ class Board(BaseModel):
     )
 
 
-class Task(BaseModel):
+class Task(BaseModel, BaseDataTime):
     PRIORITY_CHOICES = [
         ("high", "Высокий"),
         ("medium", "Средний"),
@@ -54,8 +62,6 @@ class Task(BaseModel):
 
     board = models.ForeignKey(Board, on_delete=models.CASCADE, verbose_name="Доска")
     users = models.ManyToManyField(settings.AUTH_USER_MODEL, verbose_name="Исполнители")
-    date = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
-    updated = models.DateTimeField(auto_now=True, verbose_name="Дата обновления")
     priority = models.CharField(
         max_length=10, choices=PRIORITY_CHOICES, default="low", verbose_name="Приоритет"
     )
@@ -86,8 +92,14 @@ class ProjectMemberShip(models.Model):
         ("member", "Участник"),
         ("viewer", "Зритель"),
     ]
-    users = models.ManyToManyField(settings.AUTH_USER_MODEL, verbose_name="Исполнители")
-    project = models.OneToOneField(
+    users = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        blank=True,
+        null=True,
+        verbose_name="Исполнители",
+    )
+    project = models.ForeignKey(
         Project, on_delete=models.CASCADE, verbose_name="Проект"
     )
     role = models.CharField(

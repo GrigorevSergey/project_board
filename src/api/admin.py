@@ -1,6 +1,13 @@
 from django.contrib import admin
 
-from .models import AdditionalTask, Board, Project, Task
+from .models import (
+    AdditionalTask,
+    Board,
+    Project,
+    ProjectMemberShip,
+    Task,
+    TaskRelation,
+)
 
 
 @admin.register(Project)
@@ -22,3 +29,14 @@ class TaskAdmin(admin.ModelAdmin):
 @admin.register(AdditionalTask)
 class AdditionalTaskAdmin(admin.ModelAdmin):
     list_display = ("title", "task")
+
+
+@admin.register(ProjectMemberShip)
+class ProjectMemberShipAdmin(admin.ModelAdmin):
+    list_display = ("users", "project", "role")
+    list_display = ("project", "role")
+
+
+@admin.register(TaskRelation)
+class TaskRelationAdmin(admin.ModelAdmin):
+    list_display = ("relation_type",)

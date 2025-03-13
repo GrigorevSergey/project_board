@@ -39,5 +39,8 @@ class Users(AbstractUser):
         default=dict, blank=True, null=True, verbose_name="Уведомление"
     )
 
+    USERNAME_FIELD = "number_phone"
+    REQUIRED_FIELDS = []
+
     def __str__(self):
         return self.name
