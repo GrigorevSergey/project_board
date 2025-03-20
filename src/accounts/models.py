@@ -33,7 +33,7 @@ class Users(AbstractUser):
         verbose_name="Должность",
     )
     number_phone = models.CharField(
-        max_length=20, unique=True, default="00000000000", verbose_name="Номер телефона"
+        max_length=20, unique=True, verbose_name="Номер телефона"
     )
     notification = models.JSONField(
         default=dict, blank=True, null=True, verbose_name="Уведомление"
