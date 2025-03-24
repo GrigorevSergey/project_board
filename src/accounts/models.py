@@ -1,3 +1,5 @@
+import random
+
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
@@ -19,7 +21,7 @@ class Users(AbstractUser):
     ]
 
     name = models.CharField(max_length=20, verbose_name="Имя пользователя")
-    email = models.EmailField(unique=True)
+    email = models.EmailField()
     division = models.CharField(
         max_length=20,
         choices=DIVISION_CHOICES,
@@ -44,3 +46,15 @@ class Users(AbstractUser):
 
     def __str__(self):
         return self.name
+
+
+class VerificationCode(models.Model):
+    number_phone = models.CharField(max_length=20)
+    code = models.CharField(max_length=4)
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_used = models.BooleanField(default=False)
+
+    @classmethod
+    def generate_code(cls, number_phone):
+        code = str(random.randint(1000, 9999))
+        return cls.objects.create(number_phone=number_phone, code=code)
