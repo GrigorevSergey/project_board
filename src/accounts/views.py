@@ -1,13 +1,19 @@
 from django.utils import timezone
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import Users, VerificationCode
 from .serializers import ConfirmCodeSerializer, PhoneNumberSerializer
+from .signals import user_registered
 
 
 class RegistrationView(APIView):
+    @swagger_auto_schema(
+        operation_description="Регистрация по номеру телефона",
+        request_body=PhoneNumberSerializer,
+    )
     def post(self, request):
         serializer = PhoneNumberSerializer(data=request.data)
         if serializer.is_valid():
@@ -21,6 +27,10 @@ class RegistrationView(APIView):
 
 
 class ConfirmCodeView(APIView):
+    @swagger_auto_schema(
+        operation_description="Подтверждение телефона",
+        request_body=ConfirmCodeSerializer,
+    )
     def post(self, request):
         serializer = ConfirmCodeSerializer(data=request.data)
         if serializer.is_valid():
@@ -40,6 +50,9 @@ class ConfirmCodeView(APIView):
             user, created = Users.objects.get_or_create(
                 number_phone=number_phone, defaults={"username": number_phone}
             )
+
+            if created:
+                user_registered.send(sender=self.__class__, user=user)
 
             verification.is_used = True
             verification.save()
