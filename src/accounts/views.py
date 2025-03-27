@@ -7,6 +7,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from .models import Users, VerificationCode
 from .serializers import ConfirmCodeSerializer, PhoneNumberSerializer
 from .signals import user_registered
+from .tasks import send_sms
 
 
 class RegistrationView(APIView):
@@ -53,6 +54,8 @@ class ConfirmCodeView(APIView):
 
             if created:
                 user_registered.send(sender=self.__class__, user=user)
+
+            send_sms.delay(user.number_phone)
 
             verification.is_used = True
             verification.save()
