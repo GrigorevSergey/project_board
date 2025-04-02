@@ -27,12 +27,9 @@ class Project(BaseModel):
         verbose_name="Создатель проекта",
         related_name="owned_project",
     )
-    members = models.ForeignKey(
+    members = models.ManyToManyField(
         settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
         verbose_name="Участники",
-        blank=True,
-        null=True,
         related_name="projects",
     )
 
