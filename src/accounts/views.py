@@ -5,7 +5,11 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import Users, VerificationCode
-from .serializers import ConfirmCodeSerializer, PhoneNumberSerializer
+from .serializers import (
+    ConfirmCodeSerializer,
+    NotificationSerializer,
+    PhoneNumberSerializer,
+)
 from .signals import user_registered
 from .tasks import send_sms
 

@@ -15,3 +15,9 @@ class PhoneNumberSerializer(serializers.Serializer):
 class ConfirmCodeSerializer(serializers.Serializer):
     number_phone = serializers.CharField()
     code = serializers.CharField(max_length=4)
+
+
+class NotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Users
+        fields = ["notification"]
