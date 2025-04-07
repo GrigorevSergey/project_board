@@ -1,7 +1,7 @@
+from django.contrib.auth import get_user_model
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from accounts.models import Users
@@ -9,6 +9,7 @@ from accounts.serializers import NotificationSerializer
 from config import settings
 
 from .models import Board, Project, Task
+from .permissions import IsAuthenticated, IsBoardAssign, IsOwnerOrAdmin, IsProjectMember
 from .serializers import (
     AdditionalTaskSerializer,
     BoardSerializer,
@@ -24,8 +25,14 @@ from .serializers import (
 class ProjectViewSet(viewsets.ModelViewSet):
     queryset = Project.objects.select_related("owner").prefetch_related("members")
     serializer_class = ProjectSerializer
+    permission_classes = [IsAuthenticated]
 
-    @action(detail=True, methods=["post"])
+    def get_permissions(self):
+        if self.request.method in ["POST", "PUT", "DELETE"]:
+            self.permission_classes = [IsOwnerOrAdmin]
+        return super().get_permissions()
+
+    @action(detail=True, methods=["post"], permission_classes=[IsOwnerOrAdmin])
     def add_member(self, request, pk=None):
         project = self.get_object()
         member_id = request.data.get("member_id")
@@ -35,7 +42,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
                 {"error": "member_id is required."}, status=status.HTTP_400_BAD_REQUEST
             )
 
-        member = settings.AUTH_USER_MODEL.objects.get(id=member_id)
+        member = get_user_model().objects.get(id=member_id)
         if not member:
             return Response(
                 {"error": "Участник не найден."}, status=status.HTTP_404_NOT_FOUND
@@ -46,7 +53,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
             {"message": "Участник добавлен."}, status=status.HTTP_201_CREATED
         )
 
-    @action(detail=True, methods=["post"])
+    @action(detail=True, methods=["post"], permission_classes=[IsOwnerOrAdmin])
     def delete_member(self, request, pk=None):
         project = self.get_object()
         member_id = request.data.get("member_id")
@@ -75,8 +82,19 @@ class ProjectViewSet(viewsets.ModelViewSet):
 class BoardViewSet(viewsets.ModelViewSet):
     queryset = Board.objects.all()
     serializer_class = BoardSerializer
+    permission_classes = [IsProjectMember, IsAuthenticated]
 
-    @action(detail=True, methods=["post"], url_path="columns")
+    def get_permissions(self):
+        if self.request.method in ["POST", "PUT", "DELETE"]:
+            self.permission_classes = [IsOwnerOrAdmin]
+        return super().get_permissions()
+
+    @action(
+        detail=True,
+        methods=["post"],
+        url_path="columns",
+        permission_classes=[IsOwnerOrAdmin],
+    )
     def create_column(self, request, pk=None):
         board = self.get_object()
         column_status = request.data.get("status")
@@ -100,12 +118,25 @@ class BoardViewSet(viewsets.ModelViewSet):
 class TaskViewSet(viewsets.ModelViewSet):
     queryset = Task.objects.all()
     serializer_class = TaskSerializer
+    permission_classes = [IsProjectMember, IsAuthenticated]
+
+    def get_permissions(self):
+        if self.request.method in ["PUT"]:
+            self.permission_classes = [IsProjectMember, IsOwnerOrAdmin, IsBoardAssign]
+        elif self.request.method in ["POST", "DELETE"]:
+            self.permission_classes = [IsOwnerOrAdmin, IsBoardAssign]
+        return super().get_permissions()
 
     @swagger_auto_schema(
         operation_description="Создание подзадачи",
         request_body=AdditionalTaskSerializer,
     )
-    @action(detail=True, methods=["post"], url_path="subtasks")
+    @action(
+        detail=True,
+        methods=["post"],
+        url_path="subtasks",
+        permission_classes=[IsBoardAssign],
+    )
     def create_subtask(self, request, pk=None):
         task = self.get_object()
         subtask_data = request.data
@@ -121,7 +152,12 @@ class TaskViewSet(viewsets.ModelViewSet):
         operation_description="Добавление исполнителя",
         request_body=None,
     )
-    @action(detail=True, methods=["post"], url_path="assign")
+    @action(
+        detail=True,
+        methods=["post"],
+        url_path="assign",
+        permission_classes=[IsOwnerOrAdmin],
+    )
     def add_assign(self, request, pk=None):
         task = self.get_object()
         assign_id = request.data.get("assign_id")
@@ -145,7 +181,12 @@ class TaskViewSet(viewsets.ModelViewSet):
         operation_description="Перемещение задачи",
         request_body=None,
     )
-    @action(detail=True, methods=["post"], url_path="move")
+    @action(
+        detail=True,
+        methods=["post"],
+        url_path="move",
+        permission_classes=[IsBoardAssign],
+    )
     def move(self, request, pk=None):
         task = self.get_object()
         update_status = request.data.get("status")
@@ -164,7 +205,7 @@ class NotificationViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return self.queryset.filter(user=self.request.user)
+        return self.queryset.filter(id=self.request.user.id)
 
     @swagger_auto_schema(
         operation_description="Получение настроек уведомлений пользователя",

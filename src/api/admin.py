@@ -34,7 +34,6 @@ class AdditionalTaskAdmin(admin.ModelAdmin):
 @admin.register(ProjectMemberShip)
 class ProjectMemberShipAdmin(admin.ModelAdmin):
     list_display = ("users", "project", "role")
-    list_display = ("project", "role")
 
 
 @admin.register(TaskRelation)
