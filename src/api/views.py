@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
 from accounts.models import Users
@@ -25,15 +26,22 @@ from .serializers import (
 class ProjectViewSet(viewsets.ModelViewSet):
     queryset = Project.objects.select_related("owner").prefetch_related("members")
     serializer_class = ProjectSerializer
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
-    def get_permissions(self):
-        if self.request.method in ["POST", "PUT", "DELETE"]:
-            self.permission_classes = [IsOwnerOrAdmin]
-        return super().get_permissions()
+    # def get_permissions(self):
+    #     if self.request.method in ["POST", "PUT", "DELETE"]:
+    #         self.permission_classes = [IsOwnerOrAdmin]
+    #     return super().get_permissions()
 
     @action(detail=True, methods=["post"], permission_classes=[IsOwnerOrAdmin])
     def add_member(self, request, pk=None):
+        if not settings.FEATURE_FLAGS["ENABLE_ADD_MEMBER"]:
+            return Response(
+                {"error": "Функция добавления участников отключена."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
         project = self.get_object()
         member_id = request.data.get("member_id")
 
@@ -82,12 +90,13 @@ class ProjectViewSet(viewsets.ModelViewSet):
 class BoardViewSet(viewsets.ModelViewSet):
     queryset = Board.objects.all()
     serializer_class = BoardSerializer
-    permission_classes = [IsProjectMember, IsAuthenticated]
+    # permission_classes = [IsProjectMember, IsAuthenticated]
+    permission_classes = [AllowAny]
 
-    def get_permissions(self):
-        if self.request.method in ["POST", "PUT", "DELETE"]:
-            self.permission_classes = [IsOwnerOrAdmin]
-        return super().get_permissions()
+    # def get_permissions(self):
+    #     if self.request.method in ["POST", "PUT", "DELETE"]:
+    #         self.permission_classes = [IsOwnerOrAdmin]
+    #     return super().get_permissions()
 
     @action(
         detail=True,
@@ -118,14 +127,15 @@ class BoardViewSet(viewsets.ModelViewSet):
 class TaskViewSet(viewsets.ModelViewSet):
     queryset = Task.objects.all()
     serializer_class = TaskSerializer
-    permission_classes = [IsProjectMember, IsAuthenticated]
+    # permission_classes = [IsProjectMember, IsAuthenticated]
+    permission_classes = [AllowAny]
 
-    def get_permissions(self):
-        if self.request.method in ["PUT"]:
-            self.permission_classes = [IsProjectMember, IsOwnerOrAdmin, IsBoardAssign]
-        elif self.request.method in ["POST", "DELETE"]:
-            self.permission_classes = [IsOwnerOrAdmin, IsBoardAssign]
-        return super().get_permissions()
+    # def get_permissions(self):
+    #     if self.request.method in ["PUT"]:
+    #         self.permission_classes = [IsProjectMember, IsOwnerOrAdmin, IsBoardAssign]
+    #     elif self.request.method in ["POST", "DELETE"]:
+    #         self.permission_classes = [IsOwnerOrAdmin, IsBoardAssign]
+    #     return super().get_permissions()
 
     @swagger_auto_schema(
         operation_description="Создание подзадачи",
@@ -209,7 +219,7 @@ class NotificationViewSet(viewsets.ModelViewSet):
 
     @swagger_auto_schema(
         operation_description="Получение настроек уведомлений пользователя",
-        request_body=NotificationSerializer,
+        request_body=None,
     )
     @action(detail=False, methods=["get"], url_path="settings")
     def get_settings(self, request):
