@@ -1,0 +1,44 @@
+services:
+  web-app:
+    build:
+      context: .
+    ports:
+      - '8000:8000'
+    volumes:
+      - .:/app/
+    working_dir: /app/src
+    env_file:
+      - .env-local
+    command: >
+      sh -c "./manage.py warmup && ./manage.py runserver 0.0.0.0:8000"
+    depends_on:
+      - database
+
+  database:
+    image: postgres:17-alpine
+    container_name: postgresapp
+    env_file: 
+      - .env-local
+    ports:
+      - "5432:5432"
+    volumes:
+      - .:/app/
+    
+  
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+
+  worker:
+    build: 
+      context: .
+    hostname: celery
+    command: celery -A config.celery worker --loglevel=info 
+    env_file:
+      - .env-local
+    volumes:
+      - .:/app/
+    depends_on:
+      - redis
+      - database
