@@ -21,24 +21,3 @@ RUN poetry config virtualenvs.create false && \
 COPY . .
 
 WORKDIR /app/src
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
