@@ -9,7 +9,8 @@ SECRET_KEY = "django-insecure-_bgb+%9y64$9tz9w9cq23re3^_&qwd2pjb=*hf+j)1qge6*t*i
 
 DEBUG = True
 
-ALLOWED_HOSTS = ["localhost", "127.0.0.1", "0.0.0.0"]
+ALLOWED_HOSTS = ["*"]
+
 
 DEBUG = True
 
@@ -27,11 +28,13 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt",
     "drf_yasg",
     "cachalot",
+    "django_prometheus",
 ]
 
 AUTH_USER_MODEL = "accounts.Users"
 
 MIDDLEWARE = [
+    "django_prometheus.middleware.PrometheusBeforeMiddleware",
     "debug_toolbar.middleware.DebugToolbarMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -41,6 +44,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django_cprofile_middleware.middleware.ProfilerMiddleware",
+    "django_prometheus.middleware.PrometheusAfterMiddleware",
 ]
 
 DJANGO_CPROFILE_MIDDLEWARE_REQUIRE_STAFF = False
