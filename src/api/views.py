@@ -36,7 +36,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=["post"], permission_classes=[IsOwnerOrAdmin])
     def add_member(self, request, pk=None):
-        if not settings.FEATURE_FLAGS["ENABLE_ADD_MEMBER"]:
+        if not settings.ENABLE_ADD_MEMBER:
             return Response(
                 {"error": "Функция добавления участников отключена."},
                 status=status.HTTP_403_FORBIDDEN,
