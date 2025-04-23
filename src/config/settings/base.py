@@ -29,6 +29,7 @@ INSTALLED_APPS = [
     "drf_yasg",
     "cachalot",
     "django_prometheus",
+    "flags",
 ]
 
 AUTH_USER_MODEL = "accounts.Users"
@@ -144,4 +145,8 @@ CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_TIMEZONE = "Europe/Moscow"
 
-ENABLE_ADD_MEMBER = True
+FLAGS = {
+    "add_member_feature": [
+        {"condition": "boolean", "value": True},
+    ]
+}

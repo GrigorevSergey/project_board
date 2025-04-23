@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from drf_yasg.utils import swagger_auto_schema
+from flags.decorators import flag_check
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny
@@ -35,13 +36,14 @@ class ProjectViewSet(viewsets.ModelViewSet):
     #     return super().get_permissions()
 
     @action(detail=True, methods=["post"], permission_classes=[IsOwnerOrAdmin])
+    @flag_check(
+        "enabled",
+        "add_member_feature",
+        fallback_view=lambda request: Response(
+            {"error": "Функция отключена."}, status=status.HTTP_403_FORBIDDEN
+        ),
+    )
     def add_member(self, request, pk=None):
-        if not settings.ENABLE_ADD_MEMBER:
-            return Response(
-                {"error": "Функция добавления участников отключена."},
-                status=status.HTTP_403_FORBIDDEN,
-            )
-
         project = self.get_object()
         member_id = request.data.get("member_id")
 
