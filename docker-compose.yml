@@ -10,7 +10,7 @@ services:
     env_file:
       - .env-local
     command: >
-      sh -c "./manage.py migrate --noinput
+      sh -c " ./manage.py migrate --noinput
       && ./manage.py warmup 
       && ./manage.py runserver 0.0.0.0:8000"
     depends_on:

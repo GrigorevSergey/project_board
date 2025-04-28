@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django_ratelimit.decorators import ratelimit
 from drf_yasg.utils import swagger_auto_schema
 from flags.decorators import flag_check
 from rest_framework import status, viewsets
@@ -43,6 +44,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
             {"error": "Функция отключена."}, status=status.HTTP_403_FORBIDDEN
         ),
     )
+    @ratelimit(key="user", rate="5/m")
     def add_member(self, request, pk=None):
         project = self.get_object()
         member_id = request.data.get("member_id")
@@ -64,6 +66,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
         )
 
     @action(detail=True, methods=["post"], permission_classes=[IsOwnerOrAdmin])
+    @ratelimit(key="user", rate="5/m")
     def delete_member(self, request, pk=None):
         project = self.get_object()
         member_id = request.data.get("member_id")

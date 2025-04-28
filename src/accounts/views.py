@@ -1,6 +1,7 @@
 from django.utils import timezone
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
@@ -15,6 +16,9 @@ from .tasks import send_sms
 
 
 class RegistrationView(APIView):
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "registration"
+
     @swagger_auto_schema(
         operation_description="Регистрация по номеру телефона",
         request_body=PhoneNumberSerializer,
@@ -32,6 +36,9 @@ class RegistrationView(APIView):
 
 
 class ConfirmCodeView(APIView):
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "confirm"
+
     @swagger_auto_schema(
         operation_description="Подтверждение телефона",
         request_body=ConfirmCodeSerializer,

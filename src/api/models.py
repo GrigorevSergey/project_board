@@ -49,6 +49,9 @@ class Board(BaseModel):
         max_length=20, choices=STATUS_CHOICES, default="backlog", verbose_name="Статус"
     )
 
+    class Meta:
+        indexes = [models.Index(fields=["status"])]
+
 
 class Task(BaseModel, BaseDataTime):
     PRIORITY_CHOICES = [
@@ -71,6 +74,11 @@ class Task(BaseModel, BaseDataTime):
 
     def __str__(self):
         return self.title
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["priority", "date_completion"]),
+        ]
 
 
 class AdditionalTask(BaseModel):
