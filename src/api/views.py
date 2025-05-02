@@ -107,22 +107,24 @@ class BoardViewSet(viewsets.ModelViewSet):
         detail=True,
         methods=["post"],
         url_path="columns",
-        permission_classes=[IsOwnerOrAdmin],
+        permission_classes=[AllowAny],  # Оставляем AllowAny для консистентности
     )
     def create_column(self, request, pk=None):
         board = self.get_object()
         column_status = request.data.get("status")
 
+        # Проверяем, что status валиден
         if column_status not in dict(Board.STATUS_CHOICES):
             return Response(
                 {"error": "Invalid status"}, status=status.HTTP_400_BAD_REQUEST
             )
 
-        if column_status not in board.status:
-            board.status.append(column_status)
-            board.save()
+        # Обновляем status как строку
+        board.status = column_status
+        board.save()
 
-        return Response({"statuses": board.statuses}, status=status.HTTP_201_CREATED)
+        # Возвращаем текущий status
+        return Response({"status": board.status}, status=status.HTTP_201_CREATED)
 
 
 @swagger_auto_schema(
